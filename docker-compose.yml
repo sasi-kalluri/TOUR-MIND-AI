@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  database:
+    image: mongo:latest
+    container_name: tourism_mongo
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  server:
+    build: ./server
+    container_name: tourism_server
+    ports:
+      - "${SERVER_PORT:-5000}:5000"
+    env_file:
+      - ./server/.env
+    environment:
+      - MONGO_URI=mongodb://tourism_mongo:27017/ai_tourism_db
+      - PORT=5000 # Internal container port matches EXPOSE
+    depends_on:
+      - database
+
+  client:
+    build: ./client
+    container_name: tourism_client
+    ports:
+      - "${CLIENT_PORT:-5173}:5173"
+    environment:
+      - SERVER_URL=http://tourism_server:5000 # Internal docker network communication
+    depends_on:
+      - server
+
+volumes:
+  mongo_data:
